@@ -47,19 +47,7 @@ def parse_DesignersList_URL(base_url, headers, myDesignersList):
 
 BrandsDict = parse_DesignersList_URL(base_url, headers, designers)
 
-# def openBrandPage(brandsDictURLs, headers):
-#     session = requests.session()
-#     for urls in brandsDictURLs.items():
-#         url = urls[1]
-#         request = session.get(url, headers=headers)
-#         soup = bs(request.content, 'lxml')
-#         items = soup.find_all('div', attrs={'itemprop':'item'})
-#         for item in items:
-#             print(item)
-#
-# openBrandPage(BrandsDict, headers)
-
-def openBrandPage(brandsDictURLs, headers):
+def showAllURLs(brandsDictURLs, headers):
     session = requests.session()
     avURLs = []
 
