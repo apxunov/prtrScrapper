@@ -8,17 +8,10 @@ with open("data.json", "r") as read_file:
     designers = data["designerNames"]
     userAgent = data["user-agent"]
 
+
 headers = {'accept': '*/*',
            'user-agent': f'{userAgent}'}
-
 base_url = 'https://www.mrporter.com/en-ru/mens/azdesigners'
-
-def intersection(arr1,arr2):
-    array = []
-    for element in arr1:
-        if element in arr2:
-            array.append(element)
-    return array
 
 
 def parse_DesignersList_URL(base_url, headers, myDesignersList):
@@ -46,6 +39,8 @@ def parse_DesignersList_URL(base_url, headers, myDesignersList):
     return DesignersWeLookFor
 
 BrandsDict = parse_DesignersList_URL(base_url, headers, designers)
+
+
 
 def showAllURLs(brandsDictURLs, headers):
     session = requests.session()
@@ -76,5 +71,42 @@ def showAllURLs(brandsDictURLs, headers):
 
     return avURLs
 
+itemsURLs = showAllURLs(BrandsDict, headers)
 
-print(openBrandPage(BrandsDict, headers))
+
+
+def checkItems(itemsURLs, headers):
+    session = requests.session()
+    foundItems = []
+
+    for url in itemsURLs:
+        request = session.get(url, headers=headers)
+        if request.status_code == 200:
+            soup = bs(request.content, 'lxml')
+
+            try:
+                items = soup.find_all('a')
+                for item in items:
+                    try:
+                        brand = item.find('span', attrs={'data-testid': 'pid-summary-designer'}).text
+                        image = (item.find('img')['src']).replace('//', '')
+                        description = item.find('span', attrs={'data-testid': 'pid-summary-description'}).text
+                        price = item.find('span', attrs={'itemprop': 'price'}).text
+                        link = item['href']
+
+                        foundItems.append({
+                            'brand': brand,
+                            'image': image,
+                            'description': description,
+                            'price': price,
+                            'link': f'https://www.mrporter.com{link}'
+                        })
+
+                    except:
+                        pass
+
+            except:
+                pass
+    return foundItems
+
+print(checkItems(itemsURLs, headers))
