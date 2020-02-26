@@ -47,16 +47,46 @@ def parse_DesignersList_URL(base_url, headers, myDesignersList):
 
 BrandsDict = parse_DesignersList_URL(base_url, headers, designers)
 
+# def openBrandPage(brandsDictURLs, headers):
+#     session = requests.session()
+#     for urls in brandsDictURLs.items():
+#         url = urls[1]
+#         request = session.get(url, headers=headers)
+#         soup = bs(request.content, 'lxml')
+#         items = soup.find_all('div', attrs={'itemprop':'item'})
+#         for item in items:
+#             print(item)
+#
+# openBrandPage(BrandsDict, headers)
+
 def openBrandPage(brandsDictURLs, headers):
     session = requests.session()
+    avURLs = []
+
     for urls in brandsDictURLs.items():
+        brand = urls[0].replace(' ', '-')
         url = urls[1]
+        avURLs.append(url)
         request = session.get(url, headers=headers)
-        soup = bs(request.content, 'lxml')
-        items = soup.find_all('div', attrs={'itemprop':'item'})
-        for item in items:
-            print(item)
 
-openBrandPage(BrandsDict, headers)
+        if request.status_code == 200:
+            soup = bs(request.content, 'lxml')
+
+            try:
+                pagination = soup.find_all('a', attrs={'class': 'Pagination6__last'})
+                for page in pagination:
+                    count = int(page['href'].rsplit('=')[1]) + 1
+                    for brandPage in range(count):
+                        if brandPage == 1 or brandPage == 0:
+                            pass
+                        else:
+                            url = f'https://www.mrporter.com/en-ru/mens/designer/{brand}?pageNumber={brandPage}'
+                            if url not in avURLs:
+                                avURLs.append((url))
+            except:
+                pass
+
+    return avURLs
 
 
+print(openBrandPage(BrandsDict, headers))
