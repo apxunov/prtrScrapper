@@ -1,8 +1,12 @@
 import json
 import requests
 from bs4 import BeautifulSoup as bs
+import io, base64
+import xlsxwriter as xw
 
-# DesignerList4__designerName DesignerList4__designerName--productsAvailable
+wbClothe = xw.Workbook('Clothes.xlsx')
+wsClothes = wbClothe.add_worksheet('MrPorter')
+
 with open("data.json", "r") as read_file:
     data = json.load(read_file)
     designers = data["designerNames"]
@@ -37,7 +41,6 @@ def parse_DesignersList_URL(base_url, headers, myDesignersList):
         if aD in designer_URL:
             DesignersWeLookFor[aD] = designer_URL[aD]
     return DesignersWeLookFor
-
 BrandsDict = parse_DesignersList_URL(base_url, headers, designers)
 
 
@@ -70,7 +73,6 @@ def showAllURLs(brandsDictURLs, headers):
                 pass
 
     return avURLs
-
 itemsURLs = showAllURLs(BrandsDict, headers)
 
 
@@ -89,7 +91,17 @@ def checkItems(itemsURLs, headers):
                 for item in items:
                     try:
                         brand = item.find('span', attrs={'data-testid': 'pid-summary-designer'}).text
-                        image = (item.find('img')['src']).replace('//', '')
+                        imgDiv = item.find('div', attrs={'class': 'primaryImage'})
+                        primaryImageSRC = imgDiv.find('div', attrs={'class': 'Image17__imageContainer'})
+                        noScript = item.find('noscript')
+                        imageSRC = noScript.find('img')['src']
+                        # imageSRC = (primaryImageSRC.find('img'))['src']
+                        # imageSRC = (primaryImageSRC.find('img', attrs={'sizes': '(min-width: 768px) 25vw, 50vw'}))['src']
+                        image = f'https:{imageSRC}'
+                        # image = io.BytesIO(base64.b64decode(imageSRC.split(',')[1]))
+                        # image = base64.urlsafe_b64decode(imageSRC + '=' * (4 - len(imageSRC) % 4))
+                        # im.save("image.jpg")
+                        # image = base64.b64decode(imageSRC)
                         description = item.find('span', attrs={'data-testid': 'pid-summary-description'}).text
                         price = item.find('span', attrs={'itemprop': 'price'}).text
                         link = item['href']
@@ -109,4 +121,21 @@ def checkItems(itemsURLs, headers):
                 pass
     return foundItems
 
-print(checkItems(itemsURLs, headers))
+foundClothes = checkItems(itemsURLs, headers)
+print(foundClothes)
+print(len(foundClothes))
+
+row_number = 0
+col_number = 0
+
+for item in foundClothes:
+    wsClothes.write(row_number, col_number, item['brand'])
+    wsClothes.write(row_number, col_number+1, item['image'])
+    wsClothes.write(row_number, col_number+2, item['description'])
+    wsClothes.write(row_number, col_number+3, item['price'])
+    wsClothes.write(row_number, col_number+4, item['link'])
+
+    row_number += 1
+
+wbClothe.close()
+
